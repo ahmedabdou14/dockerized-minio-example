@@ -1,3 +1,9 @@
+include:
+  - path: ./minio/docker-compose.yml
+    env_file: 
+      - ./.env
+      - minio/env/.env
+
 services:
   reverse.proxy:
     image: traefik

@@ -1,0 +1,8 @@
+services:
+  minio:
+    ports:
+      - 9000:9000
+  minio-client:
+    build:
+      context: client
+      dockerfile: Dockerfile.dev

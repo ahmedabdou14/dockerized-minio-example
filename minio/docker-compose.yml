@@ -1,0 +1,60 @@
+services:
+  minio:
+    image: bitnami/minio:2024
+    restart: unless-stopped
+    env_file:
+      - env/.env
+      - env/admin/.env
+      - env/ro/.env
+      - env/rw/.env
+      - env/wo/.env
+    networks:
+      - proxy
+    volumes:
+      - minio_data:/data
+    labels:
+      - traefik.enable=true
+      # API
+      # HTTP
+      - traefik.http.routers.minio.service=minio
+      - traefik.http.routers.minio.entrypoints=http
+      - traefik.http.routers.minio.rule=Host(`minio.${DOMAIN}`)
+      - traefik.http.services.minio.loadbalancer.server.port=9000
+      # HTTPS
+      - traefik.http.routers.minio-secure.service=minio-secure
+      - traefik.http.routers.minio-secure.entrypoints=https
+      - traefik.http.routers.minio-secure.rule=Host(`minio.${DOMAIN}`)
+      - traefik.http.services.minio-secure.loadbalancer.server.port=9000
+      # Portal  
+      # TODO: allow access to the portal only from the internal network
+      # HTTP
+      - traefik.http.routers.minio-portal.service=minio-portal
+      - traefik.http.routers.minio-portal.entrypoints=http
+      - traefik.http.routers.minio-portal.rule=Host(`portal.minio.${DOMAIN}`)
+      - traefik.http.services.minio-portal.loadbalancer.server.port=9001
+      # HTTPS
+      - traefik.http.routers.minio-portal-secure.service=minio-portal-secure
+      - traefik.http.routers.minio-portal-secure.entrypoints=https
+      - traefik.http.routers.minio-portal-secure.rule=Host(`portal.minio.${DOMAIN}`)
+      - traefik.http.services.minio-portal-secure.loadbalancer.server.port=9001
+
+  minio-client:
+    build:
+      context: client
+      dockerfile: Dockerfile
+    networks:
+      - proxy
+    # incase minio itself has not started yet, retry
+    # adjust the number of retries as needed
+    restart: on-failure:10
+    env_file:
+      - env/.env
+      - env/admin/.env
+      - env/ro/.env
+      - env/rw/.env
+      - env/wo/.env
+    depends_on:
+      - minio
+
+volumes:
+  minio_data:
