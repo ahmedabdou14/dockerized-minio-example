@@ -1,0 +1,38 @@
+global:
+  checkNewVersion: true
+  sendAnonymousUsage: false
+
+serversTransport:
+  insecureSkipVerify: true # Skip verification of the server certificate, yet maintain an encrypted connection
+
+log: # Log level INFO|DEBUG|ERROR
+  level: DEBUG
+
+providers:
+  providersThrottleDuration: 1s
+  file:
+    filename: /etc/traefik/dynamic/config.dev.yml
+    watch: true
+  docker:
+    endpoint: unix:///var/run/docker.sock
+    watch: true
+    exposedByDefault: false
+    defaultRule: "Host(`{{ lower (trimPrefix `/` .Name )}}.localhost`)"
+    network: proxy
+
+entryPoints:
+  http:
+    address: :80
+  https:
+    address: :443
+    http:
+      redirections:
+        entryPoint:
+          to: http
+          scheme: http
+          permanent: true
+
+# Traefik dashboard
+api:
+  insecure: true
+  dashboard: true

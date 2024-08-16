@@ -1,0 +1,34 @@
+services:
+  reverse.proxy:
+    image: traefik
+    build:
+      context: traefik/
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    networks:
+      - proxy
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file:
+      - traefik/.env
+    environment:
+      - CF_DNS_API_TOKEN
+    volumes:
+      # Docker socket to listen to events
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Apply time zone
+      - /etc/localtime:/etc/localtime:ro
+      # TLS certificates
+      - lecerts:/etc/traefik/certs
+
+volumes:
+  lecerts:
+    name: lecerts
+
+networks:
+  proxy:
+    name: proxy
+    attachable: true

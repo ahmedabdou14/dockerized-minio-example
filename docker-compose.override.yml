@@ -1,0 +1,5 @@
+services:
+  reverse.proxy:
+    build:
+      context: traefik/
+      dockerfile: Dockerfile.dev

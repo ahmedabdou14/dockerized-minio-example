@@ -1,0 +1,56 @@
+global:
+  checkNewVersion: true
+  sendAnonymousUsage: false
+
+serversTransport:
+  insecureSkipVerify: true # Skip verification of the server certificate, yet maintain an encrypted connection
+
+log: # Log level INFO|DEBUG|ERROR
+  level: INFO
+
+providers:
+  providersThrottleDuration: 10s
+  file:
+    filename: /etc/traefik/dynamic/config.yml
+    watch: true
+  docker:
+    endpoint: unix:///var/run/docker.sock
+    watch: true
+    exposedByDefault: false
+    defaultRule: "Host(`{{ lower (trimPrefix `/` .Name )}}.YOURDOMAIN`)" # TODO: replace YOURDOMAIN with your domain
+    network: proxy
+
+entryPoints:
+  http:
+    address: :80
+    http:
+      redirections:
+        entryPoint:
+          to: https
+          scheme: https
+          permanent: true
+  https:
+    address: :443
+    http:
+      tls:
+        certResolver: letsencrypt
+        domains:
+          - main: "YOURDOMAIN" # TODO: replace YOURDOMAIN with your domain
+            sans: # Subject Alternative Names
+              - "*.YOURDOMAIN" # TODO: replace YOURDOMAIN with your domain
+      middlewares:
+        - securityHeaders@file
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: "YOUREMAIL" # TODO: replace YOUREMAIL with your email
+      storage: /etc/traefik/certs/acme.json
+      # caServer: "https://acme-staging-v02.api.letsencrypt.org/directory" # TODO: Use the staging server while testing
+      caServer: "https://acme-v02.api.letsencrypt.org/directory" # TODO: Use the production server
+      dnsChallenge:
+        provider: cloudflare
+        # Used to make sure the dns challenge is propagated to the rights dns servers
+        resolvers:
+          - "1.1.1.1:53"
+          - "1.0.0.1:53"

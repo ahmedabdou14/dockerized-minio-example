@@ -1,0 +1,10 @@
+FROM traefik:v3.1.2
+
+# ACME file
+RUN mkdir -p /etc/traefik/certs \
+    && touch /etc/traefik/certs/acme.json \
+    && chmod 600 /etc/traefik/certs/acme.json
+
+# Configuration file
+COPY static/traefik.yml /etc/traefik/traefik.yml
+COPY dynamic/ /etc/traefik/dynamic/
